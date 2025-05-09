@@ -1,11 +1,13 @@
 package com.curso.tecnologia.controller;
 
-import com.curso.tecnologia.model.Product;
+import com.curso.tecnologia.dto.ProductDTO;
 import com.curso.tecnologia.service.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAllProducts() {
+    public List<ProductDTO> getAllProducts() {
         return productService.fetchProducts();
     }
 }

@@ -1,0 +1,36 @@
+package com.curso.tecnologia.service;
+
+import com.curso.tecnologia.dto.CustomerPurchaseDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+
+@Service
+public class CustomerService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProductService.class);
+    private final RestTemplate restTemplate;
+    @Value("${customer.and.purchase.service.url}")
+    private String customerAndPurchaseUrl;
+
+    public CustomerService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public List<CustomerPurchaseDTO> fetchCustomerPurchases() {
+        try {
+            String json = restTemplate.getForObject(customerAndPurchaseUrl, String.class);
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchCustomerPurchases, url: [{}], Ex:[{}]", customerAndPurchaseUrl, e);
+            return List.of();
+        }
+    }
+
+}

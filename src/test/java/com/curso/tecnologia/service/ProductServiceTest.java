@@ -2,7 +2,6 @@ package com.curso.tecnologia.service;
 
 import com.curso.tecnologia.builder.ProductMapper;
 import com.curso.tecnologia.dto.ProductDTO;
-
 import com.curso.tecnologia.model.Product;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
 
@@ -50,7 +48,7 @@ class ProductServiceTest {
         ));
 
         // Act
-        List<Product> result = productService.fetchProducts();
+        List<ProductDTO> result = productService.fetchProducts();
 
         // Assert
         assertNotNull(result);

@@ -1,9 +1,13 @@
 package com.curso.tecnologia.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductDTO {
 
     @JsonProperty("codigo")
