@@ -18,10 +18,6 @@ public class ProductController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
 
-    @GetMapping("/server-living")
-    public void isServerLiving(){
-        LOGGER.debug("This server living");
-    }
 
     @Autowired
     public ProductController(ProductService productService) {
@@ -32,4 +28,11 @@ public class ProductController {
     public List<ProductDTO> getAllProducts() {
         return productService.fetchProducts();
     }
+
+    @GetMapping("/clear-redis-cache")
+    public void clearCache(){
+        productService.clearProductsCache();
+    }
+
+
 }

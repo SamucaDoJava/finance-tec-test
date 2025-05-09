@@ -22,4 +22,10 @@ public class CustomerController {
     public List<CustomerPurchaseDTO> getAllCustomerPurchases() {
         return customerService.fetchCustomerPurchases();
     }
+
+    @GetMapping("/clear-redis-cache")
+    public void clearCache(){
+        customerService.clearCustomerPurchaseCache();
+    }
+
 }

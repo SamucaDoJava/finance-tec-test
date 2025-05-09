@@ -39,4 +39,5 @@ public class CustomerMapper {
     private Purchase toPurchaseEntity(PurchaseDTO dto) {
         return modelMapper.map(dto, Purchase.class);
     }
+
 }

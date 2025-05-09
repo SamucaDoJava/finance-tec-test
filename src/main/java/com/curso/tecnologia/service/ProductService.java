@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,6 +30,7 @@ public class ProductService {
     @Value("${product.service.url}")
     private String productServiceUrl;
 
+    @Cacheable("products")
     public List<ProductDTO> fetchProducts() {
         try {
             String json = restTemplate.getForObject(productServiceUrl, String.class);
@@ -41,6 +44,11 @@ public class ProductService {
             LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchProducts, url: [{}], Ex:[{}]", productServiceUrl, e);
             return List.of();
         }
+    }
+
+    @CacheEvict(value = "products", allEntries = true)
+    public void clearProductsCache() {
+        LOGGER.info("Cache de customerPurchases limpo manualmente.");
     }
 
 

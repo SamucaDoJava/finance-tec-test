@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -24,15 +25,17 @@ class ProductServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
+
     @Mock
     private ProductMapper productMapper;
+
     @InjectMocks
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        restTemplate = mock(RestTemplate.class);
-        productMapper = mock(ProductMapper.class);
+        // Força o valor da variável injetada por @Value
+        ReflectionTestUtils.setField(productService, "productServiceUrl", "http://fake-url.com/api/products");
     }
 
     @Test
