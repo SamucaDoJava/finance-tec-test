@@ -1,6 +1,7 @@
 package com.curso.tecnologia.service;
 
 import com.curso.tecnologia.dto.CustomerPurchaseDTO;
+import com.curso.tecnologia.exception.CustomerServiceException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -32,8 +33,8 @@ public class CustomerService {
             ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(json, new TypeReference<>() {});
         } catch (Exception e) {
-            LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchCustomerPurchases, url: [{}], Ex:[{}]", customerAndPurchaseUrl, e);
-            return List.of();
+            LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchCustomerPurchases, url: [{}]", customerAndPurchaseUrl, e);
+            throw new CustomerServiceException("Erro ao recuperar os dados de clientes e compras.", e);
         }
     }
 

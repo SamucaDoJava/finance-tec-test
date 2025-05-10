@@ -2,6 +2,7 @@ package com.curso.tecnologia.service;
 
 import com.curso.tecnologia.builder.ProductMapper;
 import com.curso.tecnologia.dto.ProductDTO;
+import com.curso.tecnologia.exception.ProductServiceException;
 import com.curso.tecnologia.model.Product;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ public class ProductService {
     @Cacheable("products")
     public List<ProductDTO> fetchProducts() {
         try {
+            LOGGER.info(">>> [CACHE MISS] Chamando API externa fetchProducts");
             String json = restTemplate.getForObject(productServiceUrl, String.class);
             ObjectMapper mapper = new ObjectMapper();
             List<ProductDTO> productDTOs = mapper.readValue(json, new TypeReference<>() {});
@@ -41,8 +43,8 @@ public class ProductService {
 
             return productDTOs;
         } catch (Exception e) {
-            LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchProducts, url: [{}], Ex:[{}]", productServiceUrl, e);
-            return List.of();
+            LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchProducts, url: [{}]", productServiceUrl, e);
+            throw new ProductServiceException("Erro ao recuperar produtos do serviço externo.", e);
         }
     }
 
