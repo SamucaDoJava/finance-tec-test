@@ -221,10 +221,14 @@ public class PurchaseAnalysisService {
                         .orElse(null)
                 )
                 .filter(Objects::nonNull)
-                .sorted(direction == SortDirection.DESC
-                        ? Comparator.comparing(PurchaseResponseDTO::getTotalValue).reversed()
-                        : Comparator.comparing(PurchaseResponseDTO::getTotalValue)
-                )
+                .sorted((p1, p2) -> {
+                    int compare = p1.getTotalValue().compareTo(p2.getTotalValue());
+                    if (compare == 0) {
+                        // desempate por ano de compra
+                        compare = Integer.compare(p1.getProduct().getPurchaseYear(), p2.getProduct().getPurchaseYear());
+                    }
+                    return direction == SortDirection.DESC ? -compare : compare;
+                })
                 .collect(Collectors.toList());
 
         int totalPages = (int) Math.ceil((double) result.size() / size);
@@ -237,6 +241,7 @@ public class PurchaseAnalysisService {
 
         return result.subList(fromIndex, toIndex);
     }
+
 
 
 
