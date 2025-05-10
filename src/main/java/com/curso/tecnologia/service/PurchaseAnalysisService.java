@@ -24,15 +24,27 @@ public class PurchaseAnalysisService {
         this.productService = productService;
     }
 
-    public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue() {
-        LOGGER.info("Agrupando e ordenando todas as compras por valor total (crescente)...");
+    public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue(SortDirection direction, int page, int size) {
+        LOGGER.info("Listando compras agregadas com ordenação [{}], página [{}], tamanho [{}]", direction, page, size);
+
+        size = size <= 0 ? 10 : size;
+        page = Math.max(page, 1);
 
         List<PurchaseResponseDTO> flatPurchases = buildAllPurchases();
         Map<String, AggregatedPurchaseResponseDTO> groupedPurchases = groupPurchasesByCustomer(flatPurchases);
         List<AggregatedPurchaseResponseDTO> sorted = sortByTotalValue(groupedPurchases);
 
-        LOGGER.debug("Total de compras agrupadas: [{}]", sorted.size());
-        return sorted;
+        if (direction == SortDirection.DESC) {
+            Collections.reverse(sorted);
+        }
+
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, sorted.size());
+
+        if (fromIndex >= sorted.size()) {
+            return Collections.emptyList();
+        }
+        return sorted.subList(fromIndex, toIndex);
     }
 
     private Map<String, AggregatedPurchaseResponseDTO> groupPurchasesByCustomer(List<PurchaseResponseDTO> flatPurchases) {
