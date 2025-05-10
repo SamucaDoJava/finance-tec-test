@@ -1,10 +1,14 @@
 package com.curso.tecnologia.service;
 
 import com.curso.tecnologia.dto.*;
+import com.curso.tecnologia.exception.ResourceNotFoundException;
+import com.curso.tecnologia.indicator.SortDirection;
+import com.curso.tecnologia.util.ClientValidateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,47 +24,97 @@ public class PurchaseAnalysisService {
         this.productService = productService;
     }
 
-    public List<PurchaseResponseDTO> getAllPurchasesSortedByValue() {
-        LOGGER.info("Ordenando todas as compras por valor total (crescente)...");
+    public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue() {
+        LOGGER.info("Agrupando e ordenando todas as compras por valor total (crescente)...");
 
-        List<PurchaseResponseDTO> sortedPurchases = buildAllPurchases().stream()
-                .sorted(Comparator.comparingDouble(PurchaseResponseDTO::getTotalValue))
+        List<PurchaseResponseDTO> flatPurchases = buildAllPurchases();
+        Map<String, AggregatedPurchaseResponseDTO> groupedPurchases = groupPurchasesByCustomer(flatPurchases);
+        List<AggregatedPurchaseResponseDTO> sorted = sortByTotalValue(groupedPurchases);
+
+        LOGGER.debug("Total de compras agrupadas: [{}]", sorted.size());
+        return sorted;
+    }
+
+    private Map<String, AggregatedPurchaseResponseDTO> groupPurchasesByCustomer(List<PurchaseResponseDTO> flatPurchases) {
+        LOGGER.info("Iniciando agrupamento de compras por cliente, percorrendo todas as compras individuais...");
+        Map<String, AggregatedPurchaseResponseDTO> grouped = new HashMap<>();
+
+        for (PurchaseResponseDTO item : flatPurchases) {
+            try {
+                String key = item.getCustomerCpf();
+                if (key == null || item.getCustomerName() == null || item.getProduct() == null) {
+                    throw new IllegalArgumentException("Dados obrigatórios ausentes no item de compra: " + item);
+                }
+
+                grouped.putIfAbsent(
+                        key,
+                        new AggregatedPurchaseResponseDTO(
+                                item.getCustomerName(),
+                                item.getCustomerCpf(),
+                                new ArrayList<>(),
+                                BigDecimal.ZERO
+                        )
+                );
+
+                AggregatedPurchaseResponseDTO aggregate = grouped.get(key);
+                BigDecimal subtotal = item.getTotalValue();
+
+                aggregate.getItems().add(
+                        new PurchasedItemDTO(
+                                item.getProduct(),
+                                item.getQuantity(),
+                                subtotal
+                        )
+                );
+                BigDecimal updatedTotal = aggregate.getTotalValue().add(subtotal);
+                aggregate.setTotalValue(updatedTotal);
+            } catch (Exception e) {
+                LOGGER.error("Erro ao processar item de compra: [{}]. Erro: [{}]", item, e.getMessage());
+            }
+        }
+        LOGGER.info("Agrupamento concluído. Total de clientes processados: [{}]", grouped.size());
+        return grouped;
+    }
+
+    private List<AggregatedPurchaseResponseDTO> sortByTotalValue(Map<String, AggregatedPurchaseResponseDTO> grouped) {
+        return grouped.values().stream()
+                .sorted(Comparator.comparing(AggregatedPurchaseResponseDTO::getTotalValue))
                 .collect(Collectors.toList());
-
-        LOGGER.debug("Total de compras ordenadas: {}", sortedPurchases.size());
-        return sortedPurchases;
     }
 
     public PurchaseResponseDTO getBiggestPurchaseByYear(int year) {
-        LOGGER.info("Buscando a maior compra do ano {}", year);
+        LOGGER.info("Buscando a maior compra do ano [{}]", year);
+        ClientValidateUtil.isValidYear(year);
 
         PurchaseResponseDTO biggest = buildAllPurchases().stream()
                 .filter(p -> p.getProduct().getPurchaseYear() == year)
-                .max(Comparator.comparingDouble(PurchaseResponseDTO::getTotalValue))
+                .max(Comparator.comparing(PurchaseResponseDTO::getTotalValue))
                 .orElse(null);
 
         if (biggest != null) {
-            LOGGER.info("Maior compra de {}: {} - R${}", year, biggest.getCustomerName(), biggest.getTotalValue());
+            LOGGER.info("Maior compra de [{}]: [{}] - R$:[{}]", year, biggest.getCustomerName(), biggest.getTotalValue());
+            return biggest;
         } else {
-            LOGGER.warn("Nenhuma compra encontrada para o ano {}", year);
+            LOGGER.warn("Nenhuma compra encontrada para o ano [{}]", year);
+            throw new ResourceNotFoundException("Nenhuma compra encontrada para o ano " + year);
         }
-
-        return biggest;
     }
 
     public List<LoyalCustomerDTO> getTop3LoyalCustomers() {
         LOGGER.info("Iniciando cálculo dos 3 clientes mais fiéis...");
 
-        Map<String, Double> customerTotals = buildAllPurchases().stream()
+        Map<String, BigDecimal> customerTotals = buildAllPurchases().stream()
                 .collect(Collectors.groupingBy(
                         PurchaseResponseDTO::getCustomerCpf,
-                        Collectors.summingDouble(PurchaseResponseDTO::getTotalValue)
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                PurchaseResponseDTO::getTotalValue,
+                                BigDecimal::add
+                        )
                 ));
-
-        LOGGER.debug("Total de clientes com compras registradas: {}", customerTotals.size());
-
+        LOGGER.debug("Total de clientes com compras registradas: [{}]", customerTotals.size());
         List<LoyalCustomerDTO> topCustomers = customerTotals.entrySet().stream()
-                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
                 .limit(3)
                 .map(entry -> {
                     CustomerPurchaseDTO customer = customerService.fetchCustomerPurchases()
@@ -70,8 +124,7 @@ public class PurchaseAnalysisService {
                             .orElse(null);
 
                     String name = customer != null ? customer.getName() : "Unknown";
-                    LOGGER.debug("Cliente fiel identificado: {} ({}) - Total gasto: {}", name, entry.getKey(), entry.getValue());
-
+                    LOGGER.debug("Cliente fiel identificado: [{}] ([{}]) - Total gasto: [{}]", name, entry.getKey(), entry.getValue());
                     return new LoyalCustomerDTO(name, entry.getKey(), entry.getValue());
                 })
                 .collect(Collectors.toList());
@@ -81,9 +134,10 @@ public class PurchaseAnalysisService {
     }
 
     public String getWineRecommendationByCustomerCpf(String cpf) {
-        LOGGER.info("Buscando recomendação de vinho para CPF {}", cpf);
+        LOGGER.info("Buscando recomendação de vinho para CPF [{}]", cpf);
 
         List<CustomerPurchaseDTO> customers = customerService.fetchCustomerPurchases();
+        ClientValidateUtil.validateCpf(cpf, customers);
         List<ProductDTO> products = productService.fetchProducts();
 
         Map<Integer, ProductDTO> productMap = products.stream()
@@ -95,7 +149,7 @@ public class PurchaseAnalysisService {
                 .map(p -> {
                     ProductDTO product = productMap.get(Integer.parseInt(p.getCode()));
                     if (product == null) {
-                        LOGGER.warn("Produto com código {} não encontrado para CPF {}", p.getCode(), cpf);
+                        LOGGER.warn("Produto com código [{}] não encontrado para CPF [{}]", p.getCode(), cpf);
                         return null;
                     }
                     return new AbstractMap.SimpleEntry<>(product.getWineType(), p.getQuantity());
@@ -107,22 +161,21 @@ public class PurchaseAnalysisService {
                 .map(Map.Entry::getKey)
                 .orElse("Sem recomendação");
 
-        LOGGER.info("Recomendação para CPF {}: {}", cpf, recommendation);
+        LOGGER.info("Recomendação para CPF [{}]: [{}]", cpf, recommendation);
         return recommendation;
     }
-
 
     private List<PurchaseResponseDTO> buildAllPurchases() {
         LOGGER.info("Iniciando montagem da lista de compras...");
 
         List<ProductDTO> products = productService.fetchProducts();
-        LOGGER.debug("Produtos carregados: {}", products.size());
+        LOGGER.debug("Produtos carregados: [{}]", products.size());
 
         Map<Integer, ProductDTO> productMap = products.stream()
                 .collect(Collectors.toMap(ProductDTO::getCode, p -> p));
 
         List<CustomerPurchaseDTO> customers = customerService.fetchCustomerPurchases();
-        LOGGER.debug("Clientes carregados: {}", customers.size());
+        LOGGER.debug("Clientes carregados: [{}]", customers.size());
 
         List<PurchaseResponseDTO> result = new ArrayList<>();
 
@@ -130,24 +183,61 @@ public class PurchaseAnalysisService {
             for (PurchaseDTO purchase : customer.getPurchases()) {
                 ProductDTO product = productMap.get(Integer.parseInt(purchase.getCode()));
                 if (product != null) {
-                    double unitPrice = Double.parseDouble(product.getRawPrice().replaceAll("[^\\d.]", ""));
-                    double total = unitPrice * purchase.getQuantity();
+                    try {
+                        BigDecimal unitPrice = new BigDecimal(product.getRawPrice().replaceAll("[^\\d.]", ""));
+                        BigDecimal quantity = BigDecimal.valueOf(purchase.getQuantity());
+                        BigDecimal total = unitPrice.multiply(quantity);
 
-                    result.add(new PurchaseResponseDTO(
-                            customer.getName(),
-                            customer.getCpf(),
-                            product,
-                            purchase.getQuantity(),
-                            total
-                    ));
+                        result.add(new PurchaseResponseDTO(
+                                customer.getName(),
+                                customer.getCpf(),
+                                product,
+                                purchase.getQuantity(),
+                                total
+                        ));
+                    } catch (NumberFormatException e) {
+                        LOGGER.error("Erro ao converter preço do produto código [{}]: [{}]", product.getCode(), e.getMessage());
+                    }
                 } else {
-                    LOGGER.warn("Produto com código {} não encontrado para cliente {}", purchase.getCode(), customer.getCpf());
+                    LOGGER.warn("Produto com código [{}] não encontrado para cliente [{}]", purchase.getCode(), customer.getCpf());
                 }
             }
         }
-        LOGGER.info("Total de compras processadas: {}", result.size());
+        LOGGER.info("Total de compras processadas: [{}]", result.size());
         return result;
     }
+
+    public List<PurchaseResponseDTO> getBiggestPurchasePerYearSorted(SortDirection direction, int page, int size) {
+        LOGGER.info("Buscando maior compra por ano - direção [{}], página [{}], tamanho [{}]", direction, page, size);
+
+        size = size <= 0 ? 1 : size;
+        page = Math.max(page, 1);
+
+        List<PurchaseResponseDTO> result = buildAllPurchases().stream()
+                .collect(Collectors.groupingBy(p -> p.getProduct().getPurchaseYear()))
+                .values().stream()
+                .map(purchases -> purchases.stream()
+                        .max(Comparator.comparing(PurchaseResponseDTO::getTotalValue))
+                        .orElse(null)
+                )
+                .filter(Objects::nonNull)
+                .sorted(direction == SortDirection.DESC
+                        ? Comparator.comparing(PurchaseResponseDTO::getTotalValue).reversed()
+                        : Comparator.comparing(PurchaseResponseDTO::getTotalValue)
+                )
+                .collect(Collectors.toList());
+
+        int totalPages = (int) Math.ceil((double) result.size() / size);
+        if (page > totalPages) {
+            return Collections.emptyList();
+        }
+
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, result.size());
+
+        return result.subList(fromIndex, toIndex);
+    }
+
 
 
 }

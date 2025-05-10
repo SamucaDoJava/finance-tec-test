@@ -1,8 +1,11 @@
 package com.curso.tecnologia.controller;
 
+import com.curso.tecnologia.dto.AggregatedPurchaseResponseDTO;
 import com.curso.tecnologia.dto.LoyalCustomerDTO;
 import com.curso.tecnologia.dto.PurchaseResponseDTO;
+import com.curso.tecnologia.exception.ResourceNotFoundException;
 import com.curso.tecnologia.service.PurchaseAnalysisService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,30 +17,30 @@ import java.util.List;
 @RequestMapping("/api")
 public class PurchaseAnalysisController {
 
-    private final PurchaseAnalysisService service;
+    private final PurchaseAnalysisService purchaseService;
 
     public PurchaseAnalysisController(PurchaseAnalysisService service) {
-        this.service = service;
+        this.purchaseService = service;
     }
 
     @GetMapping("/compras")
-    public List<PurchaseResponseDTO> getSortedPurchases() {
-        return service.getAllPurchasesSortedByValue();
+    public List<AggregatedPurchaseResponseDTO> getSortedPurchases() {
+        return purchaseService.getAllPurchasesSortedByValue();
     }
 
     @GetMapping("/maior-compra/{ano}")
-    public PurchaseResponseDTO getBiggestPurchaseByYear(@PathVariable("ano") int ano) {
-        return service.getBiggestPurchaseByYear(ano);
+    public PurchaseResponseDTO getBiggestPurchaseByYear(@PathVariable("ano") int year) {
+        return purchaseService.getBiggestPurchaseByYear(year);
     }
 
     @GetMapping("/clientes-fieis")
     public List<LoyalCustomerDTO> getTopLoyalCustomers() {
-        return service.getTop3LoyalCustomers();
+        return purchaseService.getTop3LoyalCustomers();
     }
 
     @GetMapping("/recomendacao/{cpf}")
     public String getWineRecommendation(@PathVariable("cpf") String cpf) {
-        return service.getWineRecommendationByCustomerCpf(cpf);
+        return purchaseService.getWineRecommendationByCustomerCpf(cpf);
     }
 
 }

@@ -24,7 +24,7 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping
+    @GetMapping("all-products")
     public List<ProductDTO> getAllProducts() {
         return productService.fetchProducts();
     }
