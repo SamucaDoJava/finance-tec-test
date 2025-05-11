@@ -1,11 +1,14 @@
 package com.curso.tecnologia.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
 
+@Builder
 @Data
 public class CustomerPurchaseDTO implements Serializable {
 

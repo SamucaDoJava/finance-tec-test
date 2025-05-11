@@ -4,6 +4,7 @@ import com.curso.tecnologia.dto.*;
 import com.curso.tecnologia.exception.ResourceNotFoundException;
 import com.curso.tecnologia.indicator.SortDirection;
 import com.curso.tecnologia.util.ClientValidateUtil;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class PurchaseAnalysisService {
 
@@ -19,12 +21,7 @@ public class PurchaseAnalysisService {
     private final CustomerService customerService;
     private final ProductService productService;
 
-    public PurchaseAnalysisService(CustomerService customerService, ProductService productService) {
-        this.customerService = customerService;
-        this.productService = productService;
-    }
-
-    public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue(SortDirection direction, int page, int size) {
+    public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue(int page, int size, SortDirection direction) {
         LOGGER.info("Listando compras agregadas com ordenação [{}], página [{}], tamanho [{}]", direction, page, size);
 
         size = size <= 0 ? 10 : size;
@@ -159,7 +156,7 @@ public class PurchaseAnalysisService {
                 .filter(c -> c.getCpf().equals(cpf))
                 .flatMap(c -> c.getPurchases().stream())
                 .map(p -> {
-                    ProductDTO product = productMap.get(Integer.parseInt(p.getCode()));
+                    ProductDTO product = productMap.get(p.getCode());
                     if (product == null) {
                         LOGGER.warn("Produto com código [{}] não encontrado para CPF [{}]", p.getCode(), cpf);
                         return null;
@@ -193,10 +190,10 @@ public class PurchaseAnalysisService {
 
         for (CustomerPurchaseDTO customer : customers) {
             for (PurchaseDTO purchase : customer.getPurchases()) {
-                ProductDTO product = productMap.get(Integer.parseInt(purchase.getCode()));
+                ProductDTO product = productMap.get(purchase.getCode());
                 if (product != null) {
                     try {
-                        BigDecimal unitPrice = new BigDecimal(product.getRawPrice().replaceAll("[^\\d.]", ""));
+                        BigDecimal unitPrice = product.getRawPrice();
                         BigDecimal quantity = BigDecimal.valueOf(purchase.getQuantity());
                         BigDecimal total = unitPrice.multiply(quantity);
 

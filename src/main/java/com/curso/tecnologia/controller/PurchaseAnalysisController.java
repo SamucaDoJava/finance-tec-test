@@ -6,20 +6,18 @@ import com.curso.tecnologia.dto.PurchaseResponseDTO;
 import com.curso.tecnologia.exception.ResourceNotFoundException;
 import com.curso.tecnologia.indicator.SortDirection;
 import com.curso.tecnologia.service.PurchaseAnalysisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
 public class PurchaseAnalysisController {
 
     private final PurchaseAnalysisService purchaseService;
-
-    public PurchaseAnalysisController(PurchaseAnalysisService service) {
-        this.purchaseService = service;
-    }
 
     @GetMapping("/compras")
     public List<AggregatedPurchaseResponseDTO> getAllPurchasesSortedByValue(
@@ -27,7 +25,7 @@ public class PurchaseAnalysisController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return purchaseService.getAllPurchasesSortedByValue(direction, page, size);
+        return purchaseService.getAllPurchasesSortedByValue(page, size, direction);
     }
 
     @GetMapping("/maior-compra/{ano}")

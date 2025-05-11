@@ -2,11 +2,14 @@ package com.curso.tecnologia.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,7 +22,7 @@ public class ProductDTO implements Serializable {
     private String wineType;
 
     @JsonProperty("preco")
-    private String rawPrice;
+    private BigDecimal rawPrice;
 
     @JsonProperty("safra")
     private String vintage;
