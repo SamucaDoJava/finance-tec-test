@@ -2,20 +2,29 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:latest
+    image: redis:7
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - app-net
 
-  finance-tec-test:
-    build: .
-    container_name: finance-tec-test
+
+  app:
+    build:
+      context: .
+    image: finance-tec-test
+    container_name: finance-tec-test-app-1
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - redis
+    networks:
+      - app-net
     environment:
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      ENV_FILE: docker
-      ENV_PATH: /app/env
+      - SPRING_REDIS_HOST=host.docker.internal
+      - SPRING_REDIS_PORT=6379
+
+networks:
+  app-net:
+    driver: bridge

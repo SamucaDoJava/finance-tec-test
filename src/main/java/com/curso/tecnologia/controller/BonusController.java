@@ -22,7 +22,7 @@ public class BonusController {
 
     @GetMapping("/maiores-compras")
     public List<PurchaseResponseDTO> getPurchasesPaginated(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "DESC") SortDirection direction
     ) {
