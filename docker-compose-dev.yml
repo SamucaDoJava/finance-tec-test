@@ -11,8 +11,10 @@ services:
 
 
   app:
-    image: samucadojava/finance-tec-test:latest
-    container_name: finance-tec-test-dockerhub
+    build:
+      context: .
+    image: finance-tec-test
+    container_name: finance-tec-test-app-1
     ports:
       - "8081:8080"
     depends_on:
