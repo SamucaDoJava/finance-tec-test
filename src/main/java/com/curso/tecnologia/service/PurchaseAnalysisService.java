@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -142,8 +143,9 @@ public class PurchaseAnalysisService {
         return topCustomers;
     }
 
-    public String getWineRecommendationByCustomerCpf(String cpf) {
-        LOGGER.info("Buscando recomendação de vinho para CPF [{}]", cpf);
+    /** Shows the history of the highest amount of wine consumed by a customer for a specific type of wine. */
+    public String getMostPurchasedWineTypeByCustomerCpf(String cpf) {
+        LOGGER.info("Buscando recomendação de vinho para CPF [{}] A maior quantidade de vinho de um tipo será o vinho mais frequente.", cpf);
 
         List<CustomerPurchaseDTO> customers = customerService.fetchCustomerPurchases();
         ClientValidateUtil.validateCpf(cpf, customers);
@@ -171,6 +173,39 @@ public class PurchaseAnalysisService {
                 .orElse("Sem recomendação");
 
         LOGGER.info("Recomendação para CPF [{}]: [{}]", cpf, recommendation);
+        return recommendation;
+    }
+
+    /** Show the customer's most frequent wine purchase, considers the most frequent purchase and not necessarily the largest quantities. */
+    public String getMostFrequentWineTypeByCustomerCpf(String cpf) {
+        LOGGER.info("Buscando recomendação de vinho mais frequente para CPF [{}] sera os mais frequentes e não a quantidade maior. ", cpf);
+
+        List<CustomerPurchaseDTO> customers = customerService.fetchCustomerPurchases();
+        ClientValidateUtil.validateCpf(cpf, customers);
+        List<ProductDTO> products = productService.fetchProducts();
+
+        Map<Integer, ProductDTO> productMap = products.stream()
+                .collect(Collectors.toMap(ProductDTO::getCode, p -> p));
+
+        String recommendation = customers.stream()
+                .filter(c -> c.getCpf().equals(cpf))
+                .flatMap(c -> c.getPurchases().stream())
+                .map(p -> {
+                    ProductDTO product = productMap.get(p.getCode());
+                    if (product == null) {
+                        LOGGER.warn("Produto com código [{}] não encontrado para CPF [{}]", p.getCode(), cpf);
+                        return null;
+                    }
+                    return product.getWineType();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("Sem recomendação");
+
+        LOGGER.info("Recomendação por frequência para CPF [{}]: [{}]", cpf, recommendation);
         return recommendation;
     }
 

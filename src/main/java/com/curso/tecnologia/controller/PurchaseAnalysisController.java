@@ -3,11 +3,9 @@ package com.curso.tecnologia.controller;
 import com.curso.tecnologia.dto.AggregatedPurchaseResponseDTO;
 import com.curso.tecnologia.dto.LoyalCustomerDTO;
 import com.curso.tecnologia.dto.PurchaseResponseDTO;
-import com.curso.tecnologia.exception.ResourceNotFoundException;
 import com.curso.tecnologia.indicator.SortDirection;
 import com.curso.tecnologia.service.PurchaseAnalysisService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,7 +38,7 @@ public class PurchaseAnalysisController {
 
     @GetMapping("/recomendacao/{cpf}")
     public String getWineRecommendation(@PathVariable("cpf") String cpf) {
-        return purchaseService.getWineRecommendationByCustomerCpf(cpf);
+        return purchaseService.getMostFrequentWineTypeByCustomerCpf(cpf);
     }
 
 }

@@ -1,5 +1,6 @@
 
-# 🛒 Wine Purchase Microservice
+# 🛒 Finance Tec Test
+## Wine Purchase Microservice
 
 This microservice is responsible for processing, analyzing and recommending data based on wine purchase records. It was developed to simulate business logic over mocked purchase and client data, allowing insights and recommendations over client behavior and product consumption.
 
@@ -50,14 +51,26 @@ Returns a wine recommendation based on the wine types that the specified client 
 
 ## 📦 How to Run
 
+# With docker mode
+1. Test this application using a public image of dockerhub of this application access the follow link
+2. dockerhub link:
+3. with docker installed in your machine run `````docker compose up````` command for create docker instance image.
+4. Access the follow swagger url for access the all endpoints of application.
+5. Swagger URL:
+
+# With dev mod
+🚨
+Please note, if you are not using Docker and are unable to create a Redis image with the default port 6379
+this application will not work properly.
+
 1. Clone the repository
 2. Run the application using Maven or your favorite IDE
 3. Access Swagger at `http://localhost:8080/swagger-ui/index.html`
 
-## 📫 Submission
+## 📌 About application construction
+All code created and encoded with english sintaxe.
+This application using default JDK 22 by default and Springboot version 3.4
+This application is all created of SOLID principal.
+The entire system is covered by a layer of unit and integration tests using Junity / Mokito.
+The external endpoints used in the application use cached data from REDIS to help with application performance and performance.
 
-Once completed, please send us the link to your GitHub repository containing the full project.
-
----
-
-Feel free to reach out if you have any questions!
