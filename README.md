@@ -53,10 +53,11 @@ Returns a wine recommendation based on the wine types that the specified client 
 
 # With docker mode
 1. Test this application using a public image of dockerhub of this application access the follow link
-2. dockerhub link:
+2. dockerhub link: ````samucadojava/finance-tec-test````
 3. with docker installed in your machine run `````docker compose up````` command for create docker instance image.
-4. Access the follow swagger url for access the all endpoints of application.
-5. Swagger URL:
+4. download the latest version.
+5. access the follow swagger url for access the all endpoints of application.
+6. swagger URL: http://localhost:8081/swagger-ui/index.html#
 
 # With dev mod
 🚨

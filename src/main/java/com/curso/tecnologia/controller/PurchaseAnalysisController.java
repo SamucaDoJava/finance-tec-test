@@ -38,7 +38,7 @@ public class PurchaseAnalysisController {
 
     @GetMapping("/recomendacao/{cpf}")
     public String getWineRecommendation(@PathVariable("cpf") String cpf) {
-        return purchaseService.getMostPurchasedWineTypeByCustomerCpf(cpf);
+        return purchaseService.getMostPurchasedWineTypeByCustomerCpf(cpf.replace(" ", ""));
     }
 
 }
