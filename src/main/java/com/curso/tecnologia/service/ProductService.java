@@ -37,11 +37,7 @@ public class ProductService {
             LOGGER.info(">>> [CACHE MISS] Chamando API externa fetchProducts");
             String json = restTemplate.getForObject(productServiceUrl, String.class);
             ObjectMapper mapper = new ObjectMapper();
-            List<ProductDTO> productDTOs = mapper.readValue(json, new TypeReference<>() {});
-
-            List<Product> products = productMapper.toListEntity(productDTOs);
-
-            return productDTOs;
+            return mapper.readValue(json, new TypeReference<>() {});
         } catch (Exception e) {
             LOGGER.error("Erro ao recuperar os dados da aplicação na requisição fetchProducts, url: [{}]", productServiceUrl, e);
             throw new ProductServiceException("Erro ao recuperar produtos do serviço externo.", e);

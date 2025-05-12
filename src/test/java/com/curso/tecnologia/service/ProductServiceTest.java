@@ -26,9 +26,6 @@ class ProductServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
-    @Mock
-    private ProductMapper productMapper;
-
     @InjectMocks
     private ProductService productService;
 
@@ -45,10 +42,6 @@ class ProductServiceTest {
         List<ProductDTO> dtoList = mapper.readValue(MOCK_JSON, new TypeReference<>() {});
 
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(MOCK_JSON);
-        when(productMapper.toListEntity(dtoList)).thenReturn(List.of(
-                new Product(1, "Tinto", 229.99, "2017", 2018),
-                new Product(2, "Branco", 126.50, "2018", 2019)
-        ));
 
         // Act
         List<ProductDTO> result = productService.fetchProducts();
@@ -61,7 +54,6 @@ class ProductServiceTest {
 
         // Verify interactions
         verify(restTemplate, times(1)).getForObject(anyString(), eq(String.class));
-        verify(productMapper, times(1)).toListEntity(dtoList);
     }
 
     private static final String MOCK_JSON = """
@@ -76,7 +68,7 @@ class ProductServiceTest {
             {
                 "codigo": 2,
                 "tipo_vinho": "Branco",
-                "preco": "126.50JS:126.5",
+                "preco": "126.50",
                 "safra": "2018",
                 "ano_compra": 2019
             }
